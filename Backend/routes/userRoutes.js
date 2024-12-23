@@ -14,8 +14,7 @@ router.post('/login' , loginUser)
 router.post('/logout' , logoutUser)
 router.post('/follow/:id' ,protectRoute, FollowAndUnfollowUser)
 router.put('/update/:id' ,protectRoute, updateUser)
-router.get("/suggested", protectRoute, getSuggestedUsers);
-router.put("/freeze", protectRoute, freezeAccount);
+
 
 //export
 export default router;

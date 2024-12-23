@@ -10,8 +10,8 @@ import {
     Platform,
     ScrollView,
     Dimensions,
+    Alert,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const { width } = Dimensions.get('window');
 
@@ -30,10 +30,38 @@ export default function Signup({ navigation }) {
         setFormData({ ...formData, [field]: value });
     };
 
-    const handleSignup = async (e) => {
-        e.preventDefault();
-        console.log('Form Data:', formData);
-        navigation.navigate('Home');
+    const handleSignup = async () => {
+        setLoading(true);
+
+        try {
+            const res = await fetch('http://localhost:8000/api/users/signup', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                Alert.alert("Success", "User created successfully! Please log in.");
+                setFormData({
+                    name: "",
+                    username: "",
+                    email: "",
+                    password: "",
+                });
+
+                navigation.navigate('Login');
+            } else {
+                Alert.alert("Signup Failed", data.error || "An unknown error occurred.");
+            }
+        } catch (error) {
+            Alert.alert("Error", "Failed to connect to the server. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const { name, username, email, password } = formData;
@@ -97,12 +125,14 @@ export default function Signup({ navigation }) {
                             value={password}
                             onChangeText={(value) => onChangeFunction('password', value)}
                         />
-                        {/* <TouchableOpacity
+                        <TouchableOpacity
                             onPress={() => setShowPassword(!showPassword)}
                             style={styles.icon}
                         >
-                            <Icon name={showPassword ? 'visibility' : 'visibility-off'} size={15} />
-                        </TouchableOpacity> */}
+                            <Text style={styles.showHideText}>
+                                {showPassword ? "Hide" : "Show"}
+                            </Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
 
@@ -127,7 +157,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#f5f5f5',
         justifyContent: 'center',
-        // alignItems: 'center',
         paddingTop: 70,
         paddingHorizontal: 20,
     },
@@ -170,13 +199,16 @@ const styles = StyleSheet.create({
         height: 45,
     },
     passwordContainer: {
-        flex: 0.6,
-       // flexDirection: 'row',
-        //alignItems: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
     },
-    // icon: {
-    //     marginLeft: 5,
-    // },
+    icon: {
+        marginLeft: 10,
+    },
+    showHideText: {
+        color: '#007bff',
+        fontSize: 14,
+    },
     button: {
         backgroundColor: 'black',
         paddingVertical: 15,

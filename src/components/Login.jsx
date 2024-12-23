@@ -6,7 +6,11 @@ import {
     TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
+    Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSetRecoilState } from 'recoil';
+import userAtom from '../atoms/userAtom'; // Update path if necessary
 
 export default function Login({ navigation }) {
     const [showPassword, setShowPassword] = useState(false);
@@ -16,16 +20,50 @@ export default function Login({ navigation }) {
         password: "",
     });
 
+    const setUser = useSetRecoilState(userAtom); // Recoil setter for userAtom
+
     const onChangeFunction = (name, value) => {
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleLogin = async () => {
+    const handleLogin = async (userType) => {
         setLoading(true);
-        console.log('Form Data:', formData);
-        // Simulate login delay
-        setTimeout(() => setLoading(false), 1500);
-        navigation.navigate('Home');
+
+        try {
+            const response = await fetch('http://localhost:8000/api/users/login', {
+                method: "POST",
+                headers: {
+                    'Content-Type': "application/json",
+                },
+                // body: JSON.stringify({ ...formData, userType }),
+                body: JSON.stringify({ ...formData }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                Alert.alert("Success", "Logged in successfully!");
+
+                // Update userAtom and AsyncStorage
+                setUser(data);
+
+                // Navigate to the appropriate home screen
+                if (userType === 'buyer') {
+                    navigation.navigate('BuyerHome');
+                } else if (userType === 'seller') {
+                    navigation.navigate('SellerHome');
+                }
+
+                // Clear the form
+                setFormData({ username: "", password: "" });
+            } else {
+                Alert.alert("Login Failed", data.error || "An unknown error occurred.");
+            }
+        } catch (error) {
+            Alert.alert("Error", "Failed to connect to the server. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const { username, password } = formData;
@@ -57,27 +95,37 @@ export default function Login({ navigation }) {
                             style={styles.togglePassword}
                             onPress={() => setShowPassword((prev) => !prev)}
                         >
-                            {/* <Text style={styles.toggleText}>
+                            <Text style={styles.toggleText}>
                                 {showPassword ? "Hide" : "Show"}
-                            </Text> */}
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </View>
                 <TouchableOpacity
                     style={[styles.button, loading && styles.buttonDisabled]}
-                    onPress={handleLogin}
+                    onPress={() => handleLogin('buyer')}
                     disabled={loading}
                 >
                     {loading ? (
                         <ActivityIndicator color="#fff" />
                     ) : (
-                        <Text style={styles.buttonText}>Login</Text>
+                        <Text style={styles.buttonText}>Login as Buyer</Text>
+                    )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.button, loading && styles.buttonDisabled]}
+                    onPress={() => handleLogin('seller')}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={styles.buttonText}>Login as Seller</Text>
                     )}
                 </TouchableOpacity>
                 <Text style={styles.signupText}>
                     Not a user?{' '}
-                    <TouchableOpacity onPress={() => navigation.navigate('Signup')}
-                    >
+                    <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
                         <Text style={styles.signupLink}>Signup</Text>
                     </TouchableOpacity>
                 </Text>

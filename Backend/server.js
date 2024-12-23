@@ -6,6 +6,8 @@ import {v2 as cloudinary} from 'cloudinary'
 //export the routers from our routes
 import userRoutes from './routes/userRoutes.js'
 import postRoutes from './routes/postRoutes.js'
+import productsRoutes from './routes/productRoutes.js'
+
 import messageRoutes from './routes/messageRoutes.js'
 // import app and server from socket
 import {app,server} from './socket/socket.js'
@@ -13,7 +15,7 @@ import {app,server} from './socket/socket.js'
 import dotenv from 'dotenv';
 //mongodb connection
 import connectToMongo from './databaseConnection.js' 
-
+import cors from 'cors'
 
 connectToMongo()
 
@@ -30,7 +32,17 @@ api_secret : process.env.CLOUDINARY_API_SECRET
 
 
 //const app = express()
-
+const allowedOrigins = ['http://localhost:8081'];
+  
+  // Configure CORS options
+  const corsOptions = {
+      origin: allowedOrigins,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      credentials: true,
+  };
+  
+  app.use(cors(corsOptions));
+  
 //necessary middlewares
 app.use(express.json({limit : "50mb"}))     //to pass json in request.body
 app.use(urlencoded({extended : true}))   // req.body can parse nested data from forms
@@ -39,11 +51,13 @@ app.use(cookieParser());
 
 //routing
 app.get('/', (req, res) => {
-  res.send('Hello to pexels')
+  res.send('Hello to mad final project!')
 })
 app.use('/api/users' , userRoutes);
 app.use('/api/posts' , postRoutes );
-app.use('/api/messages' , messageRoutes );
+app.use('/api/products', productsRoutes);
+
+//app.use('/api/messages' , messageRoutes );
 
 //8000 -> backend
 //3000->frontend
